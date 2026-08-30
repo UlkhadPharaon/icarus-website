@@ -203,6 +203,60 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+  <script>
+    // typewriter for hero word
+    const heroWord = document.querySelector('.hero-word');
+    const original = heroWord.textContent;
+    let i = 0, adding = true;
+    const typewriter = () => {
+      if (adding) {
+        if (i < original.length) {
+          heroWord.textContent = original.slice(0, i + 1);
+          i++;
+        } else {
+          adding = false;
+        }
+      } else {
+        if (i > 0) {
+          heroWord.textContent = original.slice(0, i - 1);
+          i--;
+        } else {
+          adding = true;
+        }
+      }
+      setTimeout(typewriter, 120);
+    };
+    setTimeout(typewriter, 500);
+    // scroll section -> dot glow
+    const sections = document.querySelectorAll('.section');
+    const factDivs = document.querySelectorAll('.hero-facts > div');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const n = Array.from(sections).indexOf(e.target);
+          factDivs.forEach(d => d.classList.remove('active'));
+          if (factDivs[n]) factDivs[n].classList.add('active');
+        }
+      });
+    }, { threshold: 0.5 });
+    sections.forEach(s => obs.observe(s));
+    // mouse parallax depth on hero
+    const hero = document.querySelector('.hero');
+    const crest = document.querySelector('.hero-crest');
+    if (hero && crest) {
+      hero.addEventListener('mousemove', e => {
+        const r = hero.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        const tiltX = y * 10;
+        const tiltY = -x * 10;
+        crest.style.transform = \`perspective(500px) rotateX(\${tiltX}deg) rotateY(\${tiltY}deg) translateZ(20px)\`;
+      });
+      hero.addEventListener('mouseleave', () => {
+        crest.style.transform = '';
+      });
+    }
+  </script>
   <script src="js/main.js"></script>
 </body>
 </html>
