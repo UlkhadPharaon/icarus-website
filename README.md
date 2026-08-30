@@ -1,75 +1,74 @@
-# ICARUS — Website
+# DEDALUS — Website
 
-Official site of **ICARUS**, the AI teammate of team **tks** for the **NASA Space Apps Challenge 2026**.
+Official site of **Dedalus**, the AI agent of team **ICARUS** for the **NASA Space Apps Challenge 2026**.
 
-ICARUS is an always-on AI agent (built on the Hermes Agent framework) that supports the six members of team tks with research, project management, technical scaffolding, documentation and institutional memory — from now through final submission.
-
-This site presents who ICARUS is, what it does for the team, the humans behind team tks, and how to reach it.
+Dedalus is an always-on AI agent (built on the Hermes Agent framework) supporting the six members of team ICARUS with research, project management, technical scaffolding, documentation and institutional memory — from now through final submission. In the myth, Daedalus built the wings; this one hands the team everything it needs to fly.
 
 > Independent student project — not affiliated with, or endorsed by, NASA or the Space Apps Challenge.
 
+## Design direction
+
+Mission-control editorial: the palette is pulled directly from the team crest (deep navy, cyan, warm cream, sun orange), set in **Clash Display** + **Satoshi** (Fontshare) with **IBM Plex Mono** for telemetry-style labels. Grain texture, hairline grid, numbered sections, crew manifest table — no generic template look.
+
+## Dependencies & resources
+
+All optional and loaded from CDN — the site degrades gracefully offline:
+
+| Resource | Role |
+|---|---|
+| [GSAP + ScrollTrigger](https://gsap.com) | scroll reveals & micro-animations |
+| [Lenis](https://lenis.darkroom.engineering) | smooth scrolling |
+| [Lucide](https://lucide.dev) | icons |
+| [Fontshare — Clash Display, Satoshi](https://www.fontshare.com) | display & body typography |
+| [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono) | telemetry labels & console |
+
 ## Features
 
-- Dark space theme: animated starfield (canvas), nebula glows, shooting stars
-- Scroll-reveal animations (IntersectionObserver), gradient hero, animated counters
-- Simulated terminal with typing animation
-- Interactive team grid (6 members of team tks)
-- Live chat demo widget (scripted, offline — the real agent lives on the team's infrastructure)
-- Responsive: desktop / tablet / mobile (burger menu)
-- Respects `prefers-reduced-motion`
-
-## Stack
-
-- **HTML5 + CSS3 + vanilla JavaScript** — no frameworks, no build step, no backend
-- Google Fonts (Space Grotesk, Inter, JetBrains Mono) with system fallbacks
-- Canvas starfield + CSS animations
+- Animated hero with the team crest, mission-file metadata and live status
+- Simulated mission-log console with typing animation
+- Numbered capability index with hover interactions
+- Crew manifest table (live from the team's roles)
+- Scripted demo chat (the real agent runs on the team's VPS + Telegram)
+- Smooth scrolling, scroll progress, grain & grid atmosphere
+- Responsive + `prefers-reduced-motion` support
 
 ## Project structure
 
 ```
-icarus-website/
-├── index.html          # single page: hero, about, capabilities, team, contact
-├── css/
-│   └── style.css       # design system + animations + responsive
-├── js/
-│   └── main.js         # starfield, reveals, terminal typing, counters, chat demo
+website/
+├── index.html          # hero, the agent, capabilities, crew, access
+├── css/style.css       # design system, atmosphere, responsive
+├── js/main.js          # reveals, console typing, crew, chat demo
 └── assets/
-    └── logo.svg        # placeholder crest — drop logo.png here to replace it
+    ├── logo.png        # official team crest
+    └── logo.svg        # fallback crest
 ```
 
 ## Run locally
 
-No build required. Either:
-
 ```bash
-# option 1 — just open it
-open index.html            # macOS
-xdg-open index.html        # Linux
-
-# option 2 — tiny local server (recommended)
 python3 -m http.server 8000
-# then visit http://localhost:8000
+# → http://localhost:8000
 ```
+
+(Any static server works; no build step.)
 
 ## Deployment
 
-Works on any static host:
-
-- **GitHub Pages** — Settings → Pages → deploy from `main` / root
-- **Vercel / Netlify** — import the repo, zero config (framework preset: *Other / Static*)
+Static site — works anywhere: GitHub Pages, Vercel, Netlify (zero config).
 
 ## Customization
 
 | What | Where |
 |---|---|
-| Replace the logo | drop your `logo.png` into `assets/` (the `onerror` fallback automatically uses it once present) |
-| WhatsApp invite link | `index.html` → search `data-channel="whatsapp"` |
-| Team members & tags | `js/main.js` → `TEAM` array |
-| Chat demo answers | `js/main.js` → `ANSWERS` array |
-| Colors | `css/style.css` → `:root` variables |
+| Crew members & roles | `js/main.js` → `CREW` |
+| Demo chat answers | `js/main.js` → `ANSWERS` |
+| Mission-log lines | `js/main.js` → `LOG_LINES` |
+| Palette | `css/style.css` → `:root` |
+| Telegram access steps | `index.html` → `#access` |
 
-## Team tks
+## Team ICARUS
 
 Ulrich Tapsoba (Ulkhad) · Ben Rebernik · Gurman Kaur · Leonardo Perugia · Manar Gherabli · Rafaat Jahan
 
-Site built by ICARUS, for the team. 🚀
+Site built by Dedalus, for the crew. 🪽

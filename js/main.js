@@ -1,109 +1,60 @@
 /* ============================================================
-   ICARUS — team tks · NASA Space Apps Challenge 2026
-   Vanilla JS, no dependencies.
+   DEDALUS — team ICARUS · NASA Space Apps Challenge 2026
+   Vanilla JS + optional GSAP / ScrollTrigger / Lenis / Lucide.
+   Every dependency is guarded: the site degrades gracefully.
    ============================================================ */
 
 (() => {
   "use strict";
 
   const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 
-  /* ---------------- starfield ---------------- */
-  const canvas = document.getElementById("starfield");
-  if (canvas && !REDUCED) {
-    const ctx = canvas.getContext("2d");
-    let W = 0;
-    let H = 0;
-    const stars = [];
-    let meteor = null;
-
-    function buildStars() {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-      const count = Math.min(240, Math.floor((W * H) / 6500));
-      const palette = ["62,230,255", "232,236,248", "255,176,84"];
-      for (let i = 0; i < count; i++) {
-        stars.push({
-          x: Math.random() * W,
-          y: Math.random() * H,
-          r: Math.random() * 1.3 + 0.25,
-          base: Math.random() * 0.5 + 0.22,
-          phase: Math.random() * Math.PI * 2,
-          speed: Math.random() * 0.9 + 0.3,
-          drift: Math.random() * 0.05 + 0.012,
-          color: palette[Math.floor(Math.random() * palette.length)],
-        });
-      }
-    }
-
-    setInterval(() => {
-      if (document.hidden) return;
-      meteor = {
-        x: W * (0.25 + Math.random() * 0.5),
-        y: -10,
-        vx: -(2.5 + Math.random() * 3),
-        vy: 2 + Math.random() * 1.5,
-        life: 1,
-      };
-    }, 8000);
-
-    function frame() {
-      ctx.clearRect(0, 0, W, H);
-      const t = performance.now() / 1000;
-      for (const s of stars) {
-        const tw = Math.max(0.05, s.base + Math.sin(t * s.speed + s.phase) * 0.28);
-        ctx.globalAlpha = tw;
-        ctx.fillStyle = "rgb(" + s.color + ")";
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fill();
-        s.y += s.drift;
-        if (s.y > H + 2) s.y = -2;
-      }
-      if (meteor) {
-        meteor.x += meteor.vx;
-        meteor.y += meteor.vy;
-        meteor.life -= 0.012;
-        if (meteor.life <= 0) {
-          meteor = null;
-        } else {
-          const grad = ctx.createLinearGradient(meteor.x, meteor.y, meteor.x - meteor.vx * 16, meteor.y - meteor.vy * 16);
-          grad.addColorStop(0, "rgba(255,255,255," + (0.8 * meteor.life).toFixed(3) + ")");
-          grad.addColorStop(1, "rgba(62,230,255,0)");
-          ctx.globalAlpha = 1;
-          ctx.strokeStyle = grad;
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          ctx.moveTo(meteor.x, meteor.y);
-          ctx.lineTo(meteor.x - meteor.vx * 16, meteor.y - meteor.vy * 16);
-          ctx.stroke();
+  /* ---------------- smooth scroll (Lenis, optional) ---------------- */
+  if (window.Lenis && !REDUCED) {
+    const lenis = new window.Lenis({ duration: 1.05, smoothWheel: true });
+    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+    requestAnimationFrame(raf);
+    // anchor links through lenis
+    $$('a[href^="#"]').forEach((a) => {
+      a.addEventListener("click", (e) => {
+        const id = a.getAttribute("href");
+        if (id.length > 1 && $(id)) {
+          e.preventDefault();
+          lenis.scrollTo($(id), { offset: -70 });
+          closeMenu();
         }
-      }
-      ctx.globalAlpha = 1;
-      requestAnimationFrame(frame);
-    }
-    buildStars();
-    requestAnimationFrame(frame);
+      });
+    });
   }
 
-  /* ---------------- scroll progress + nav ---------------- */
-  const bar = document.getElementById("progressBar");
+  /* ---------------- progress bar + nav active ---------------- */
+  const bar = $("#progressBar");
   function updateBar() {
     const max = document.documentElement.scrollHeight - window.innerHeight;
     if (bar) bar.style.width = (max > 0 ? (window.scrollY / max) * 100 : 0) + "%";
     let current = "";
-    document.querySelectorAll("section[id]").forEach((sec) => {
+    $$("section[id]").forEach((sec) => {
       if (window.scrollY >= sec.offsetTop - 170) current = sec.id;
     });
-    document.querySelectorAll(".nav-links a:not(.nav-cta)").forEach((a) => {
+    $$(".nav-links a").forEach((a) => {
       a.classList.toggle("active", a.getAttribute("href") === "#" + current);
     });
   }
   window.addEventListener("scroll", updateBar, { passive: true });
   updateBar();
 
-  const burger = document.getElementById("navBurger");
-  const navLinks = document.getElementById("navLinks");
+  /* ---------------- burger ---------------- */
+  const burger = $("#navBurger");
+  const navLinks = $("#navLinks");
+  function closeMenu() {
+    if (burger && navLinks) {
+      burger.classList.remove("open");
+      navLinks.classList.remove("open");
+      burger.setAttribute("aria-expanded", "false");
+    }
+  }
   if (burger && navLinks) {
     burger.addEventListener("click", () => {
       burger.classList.toggle("open");
@@ -111,96 +62,116 @@
       burger.setAttribute("aria-expanded", String(navLinks.classList.contains("open")));
     });
     navLinks.addEventListener("click", (e) => {
-      if (e.target.tagName === "A") {
-        navLinks.classList.remove("open");
-        burger.classList.remove("open");
-      }
+      if (e.target.closest("a")) closeMenu();
     });
   }
 
-  /* ---------------- reveal on scroll ---------------- */
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("visible");
-        io.unobserve(entry.target);
+  /* ---------------- reveals: GSAP if present, IO fallback ---------------- */
+  const reveals = $$(".reveal");
+  if (window.gsap && window.ScrollTrigger && !REDUCED) {
+    window.gsap.registerPlugin(window.ScrollTrigger);
+    reveals.forEach((el) => {
+      window.gsap.fromTo(el,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1, y: 0, duration: 0.85, ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 88%" },
+        });
+    });
+  } else {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in");
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    reveals.forEach((el) => {
+      if (REDUCED) { el.classList.add("in"); } else { io.observe(el); }
+    });
+  }
+
+  /* ---------------- crew manifest ---------------- */
+  const CREW = [
+    { name: "Ulrich Tapsoba", tag: "crew lead · built Dedalus" },
+    { name: "Ben Rebernik", tag: "research & meeting records" },
+    { name: "Gurman Kaur", tag: "outreach & science watch" },
+    { name: "Leonardo Perugia", tag: "past challenges & solutions" },
+    { name: "Manar Gherabli", tag: "structure & final submission" },
+    { name: "Rafaat Jahan", tag: "crew" },
+  ];
+  const crewTable = $("#crewTable");
+  if (crewTable) {
+    CREW.forEach((m, i) => {
+      const row = document.createElement("div");
+      row.className = "crew-row reveal";
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = "N°" + String(i + 1).padStart(2, "0");
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = m.name;
+      const role = document.createElement("span");
+      role.className = "role";
+      role.textContent = m.tag;
+      const status = document.createElement("span");
+      status.className = "status";
+      status.textContent = "READY";
+      row.appendChild(num);
+      row.appendChild(name);
+      row.appendChild(role);
+      row.appendChild(status);
+      crewTable.appendChild(row);
+      if (window.gsap && window.ScrollTrigger && !REDUCED) {
+        window.gsap.fromTo(row,
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.6, ease: "power2.out", delay: i * 0.06, scrollTrigger: { trigger: row, start: "top 92%" } });
+      } else {
+        row.classList.add("in");
       }
     });
-  }, { threshold: 0.15 });
-  document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    const note = document.createElement("p");
+    note.className = "crew-note";
+    note.innerHTML = "Crew roles evolve week by week — the manifest above reflects the live Notion board. Need something from a member? Ask Dedalus on Telegram: <code>@your_handle → Ulrich → allow-list</code>.";
+    crewTable.appendChild(note);
+    if (!(window.gsap && window.ScrollTrigger)) note.classList.add("in");
+  }
 
-  /* ---------------- terminal typing ---------------- */
-  const TERM_LINES = [
-    { cmd: "whoami", out: "icarus — ai teammate of team tks" },
-    { cmd: "mission --status", out: "preparing for NASA Space Apps 2026 · challenge reveal ~October" },
-    { cmd: "uptime", out: "24/7 on the team VPS — nobody waits for answers" },
-    { cmd: "cat motto.txt", out: "nothing important lives in one head alone" },
+  /* ---------------- mission log console ---------------- */
+  const LOG_LINES = [
+    { cmd: "dedalus --boot", out: "wings forged. agent online — 24/7." },
+    { cmd: "dedalus memory --status", out: "PERSISTENT — 0 decisions lost since 2026-08-30" },
+    { cmd: "dedalus crew --watch", out: "6 members · several time zones · 1 deadline" },
+    { cmd: "dedalus notify --arm", out: "deadline watchers armed · saturday briefs scheduled" },
   ];
-  const termBody = document.getElementById("terminalBody");
-  const termEl = document.getElementById("terminal");
+  const consoleBody = $("#consoleBody");
+  const consoleEl = $(".console");
   let typed = false;
 
-  function runTerminal() {
+  function runLog() {
     let li = 0;
     let ci = 0;
     let lineEl = null;
-
-    function tick() {
-      if (li >= TERM_LINES.length) {
-        const c = document.createElement("span");
-        c.className = "caret";
-        termBody.appendChild(c);
-        return;
-      }
-      const cur = TERM_LINES[li];
-      if (ci === 0) {
-        lineEl = document.createElement("div");
-        lineEl.className = "cmd";
-        const p = document.createElement("span");
-        p.className = "prompt";
-        p.textContent = "icarus@tks-vps:~$ ";
-        const tx = document.createElement("span");
-        tx.className = "text";
-        lineEl.appendChild(p);
-        lineEl.appendChild(tx);
-        termBody.appendChild(lineEl);
-      }
-      ci += 1;
-      lineEl.querySelector(".text").textContent = TERM_LINES[li].cmd.slice(0, ci);
-      if (ci >= TERM_LINES[li].cmd.length) {
-        const out = document.createElement("div");
-        out.className = "out";
-        out.textContent = TERM_LINES[li].out;
-        termBody.appendChild(out);
-        li += 1;
-        ci = 0;
-        setTimeout(step, 520);
-      } else {
-        setTimeout(step, 34 + Math.random() * 46);
-      }
+    function done() {
+      const c = document.createElement("span");
+      c.className = "caret";
+      consoleBody.appendChild(c);
     }
     function step() {
-      if (li >= TERM_LINES.length) {
-        const c = document.createElement("span");
-        c.className = "caret";
-        termBody.appendChild(c);
-        return;
-      }
-      stepInner();
-    }
-    function stepInner() {
-      const cur = TERM_LINES[li];
+      if (li >= LOG_LINES.length) { done(); return; }
+      const cur = LOG_LINES[li];
       if (ci === 0) {
         lineEl = document.createElement("div");
         lineEl.className = "cmd";
         const p = document.createElement("span");
         p.className = "prompt";
-        p.textContent = "icarus@tks-vps:~$ ";
+        p.textContent = "$ ";
         const tx = document.createElement("span");
         tx.className = "text";
         lineEl.appendChild(p);
         lineEl.appendChild(tx);
-        termBody.appendChild(lineEl);
+        consoleBody.appendChild(lineEl);
       }
       ci += 1;
       lineEl.querySelector(".text").textContent = cur.cmd.slice(0, ci);
@@ -208,109 +179,55 @@
         const out = document.createElement("div");
         out.className = "out";
         out.textContent = cur.out;
-        termBody.appendChild(out);
+        consoleBody.appendChild(out);
         li += 1;
         ci = 0;
-        setTimeout(step, 520);
+        setTimeout(step, 480);
       } else {
-        setTimeout(step, 34 + Math.random() * 44);
+        setTimeout(step, 30 + Math.random() * 46);
       }
     }
     step();
   }
 
-  if (termBody && termEl) {
+  if (consoleBody && consoleEl) {
     if (REDUCED) {
-      TERM_LINES.forEach((l) => {
-        termBody.insertAdjacentHTML("beforeend",
-          '<div class="cmd"><span class="prompt">icarus@tks-vps:~$ </span>' + l.cmd + "</div>" +
+      LOG_LINES.forEach((l) => {
+        consoleBody.insertAdjacentHTML("beforeend",
+          '<div class="cmd"><span class="prompt">$ </span>' + l.cmd + "</div>" +
           '<div class="out">' + l.out + "</div>");
       });
       const c = document.createElement("span");
       c.className = "caret";
-      termBody.appendChild(c);
+      consoleBody.appendChild(c);
     } else {
       const obs = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !window.__icarusTyped) {
-            window.__icarusTyped = true;
-            setTimeout(runTerminal, 450);
+          if (entry.isIntersecting && !window.__dedalusTyped) {
+            window.__dedalusTyped = true;
+            setTimeout(runLog, 350);
           }
         });
       }, { threshold: 0.3 });
-      obs.observe(termEl);
+      obs.observe(consoleEl);
     }
   }
 
-  /* ---------------- team grid ---------------- */
-  const TEAM = [
-    { name: "Ulrich Tapsoba", tag: "Team lead · built ICARUS" },
-    { name: "Ben Rebernik", tag: "Research & meeting notes" },
-    { name: "Gurman Kaur", tag: "Outreach & science watch" },
-    { name: "Leonardo Perugia", tag: "Past challenges & solutions" },
-    { name: "Manar Gherabli", tag: "Structure & final submission" },
-    { name: "Rafaat Jahan", tag: "Team tks" },
-  ];
-  const GRADS = [
-    "linear-gradient(135deg,#3ee6ff,#8b5cf6)",
-    "linear-gradient(135deg,#ffb054,#ff5f7e)",
-    "linear-gradient(135deg,#7ce8a4,#3ee6ff)",
-    "linear-gradient(135deg,#8b5cf6,#ff5f8e)",
-    "linear-gradient(135deg,#ffd166,#ff7b54)",
-    "linear-gradient(135deg,#63b3ff,#8b5cf6)",
-  ];
-  const teamGrid = document.getElementById("teamGrid");
-  if (teamGrid) {
-    TEAM.forEach((m, i) => {
-      const parts = m.name.split(" ");
-      const initials = parts[0][0] + (parts[1] ? parts[1][0] : "");
-      const card = document.createElement("article");
-      card.className = "member reveal";
-      const avatarEl = document.createElement("div");
-      avatarEl.className = "avatar";
-      avatarEl.style.background = GRADS[i % GRADS.length];
-      avatarEl.textContent = initials;
-      const h = document.createElement("h4");
-      h.textContent = m.name;
-      const smallEl = document.createElement("small");
-      smallEl.textContent = m.tag;
-      card.appendChild(avatarEl);
-      card.appendChild(h);
-      card.appendChild(smallEl);
-      teamGrid.appendChild(card);
-      io.observe(card);
-    });
-  }
-
-  /* ---------------- hero counters ---------------- */
-  document.querySelectorAll("[data-count]").forEach((el) => {
-    const target = parseInt(el.dataset.count, 10) || 0;
-    if (REDUCED) { el.textContent = String(target); return; }
-    const start = performance.now();
-    const dur = 1400;
-    function tickCount() {
-      const p = Math.min((performance.now() - start) / dur, 1);
-      el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
-      if (p < 1) requestAnimationFrame(tickCount);
-    }
-    tickCount();
-  });
-
-  /* ---------------- chat demo ---------------- */
-  const chatLog = document.getElementById("chatLog");
-  const chatForm = document.getElementById("chatForm");
-  const chatInput = document.getElementById("chatText");
-  const chips = document.getElementById("chatChips");
+  /* ---------------- demo chat ---------------- */
+  const chatLog = $("#chatLog");
+  const chatForm = $("#chatForm");
+  const chatInput = $("#chatText");
+  const chips = $("#chatChips");
 
   const ANSWERS = [
-    { k: /(who|name|whoami|qui)/i, a: "I'm ICARUS — the always-on AI teammate of team tks for the NASA Space Apps Challenge 2026. Research, coordination, code, docs and memory: that's me, running 24/7 on the team's VPS." },
-    { k: /(what can you do|capab|help|skills|do for)/i, a: "Six things: research & intelligence, project management (Notion board, alerts, reports), technical scaffolding (repos & pipelines), docs & storytelling, institutional memory, and data & metrics. Full autonomy inside the team — hard stop before anything goes public." },
-    { k: /(date|deadline|when|calendar|timeline)/i, a: "Week-1 research tasks are due Sept 5. Challenge statements drop in October, then it's a 48-hour sprint. Team sync: every Saturday, 13:00 UTC. Final submission is handled by Manar at the deadline window." },
-    { k: /(reach|contact|channel|message|talk|whatsapp|notion|email)/i, a: "Real me: comment @ICARUS ASSISTANT on the team's Notion, or drop a message in the team's WhatsApp group. This widget is a scripted demo — the full agent runs on the team VPS with memory of everything." },
-    { k: /(nasa|space apps|challenge|track)/i, a: "The 2026 challenge statements land in October. Team strategy from our first sync: don't jump in blind — study past winners first, then pick our track fast. That research is already running." },
-    { k: /(joke|fun|story|lol)/i, a: "Why did ICARUS file a flight plan before approaching the sun? Because every good mission needs a descent path. (Deadline humor — it's a coping mechanism.)" },
+    { k: /(who|name|whoami|qui)/i, a: "Dedalus — the always-on agent of team ICARUS, flying crew for the NASA Space Apps Challenge 2026. Named after the one who built the wings: my job is handing this team everything it needs to fly." },
+    { k: /(what can you do|capab|help|skills|do for)/i, a: "Six disciplines: research & intelligence, project management (Notion board, alerts, reports), technical scaffolding, docs & storytelling, institutional memory, and data & metrics. Full autonomy inside the team — hard stop before anything goes public." },
+    { k: /(date|deadline|when|calendar|timeline)/i, a: "Week-1 research tasks: due Sept 5. Challenge statements: released in October, then a 48-hour sprint. Crew sync: every Saturday, 13:00 UTC. Final submission: handled by Manar at the deadline window." },
+    { k: /(reach|contact|channel|message|talk|telegram|access|join)/i, a: "Telegram is the front door: send your @username (or numeric ID) to Ulrich — he allow-lists you on my gateway, and we talk. Not on Telegram? A dedicated web access is on the roadmap." },
+    { k: /(nasa|space apps|challenge|track|icarus)/i, a: "Team ICARUS, NASA Space Apps 2026. The challenge statements land in October — crew strategy: study past winners first, pick our track fast. That research is already running." },
+    { k: /(joke|fun|story|lol)/i, a: "People ask why I file a flight plan before approaching the sun. Because I read the myth to the end. Every good mission needs a descent path." },
   ];
-  const FALLBACK = "Good question! I'm in scripted demo mode here — my full brain is offline. Ping @ICARUS ASSISTANT on the team's Notion for the real conversation, or ask Ulrich to connect me to more channels.";
+  const FALLBACK = "Good question — this widget runs in scripted demo mode. For the real conversation, get on the gateway: send your Telegram @handle to Ulrich and start talking to me directly.";
 
   function addMsg(text, who) {
     const div = document.createElement("div");
@@ -325,7 +242,7 @@
     setTimeout(() => {
       const hit = ANSWERS.find((a) => a.k.test(q));
       addMsg(hit ? hit.a : FALLBACK, "bot");
-    }, 550 + Math.random() * 400);
+    }, 500 + Math.random() * 400);
   }
 
   function send(q) {
@@ -348,6 +265,11 @@
     });
   }
   if (chatLog) {
-    setTimeout(() => addMsg("Hey — I'm ICARUS, team tks's AI teammate. Ask me anything. (Demo mode: scripted but honest answers.)", "bot"), 650);
+    setTimeout(() => addMsg("dedalus online. demo mode — scripted answers, honest ones. try a chip below.", "bot"), 600);
+  }
+
+  /* ---------------- icons (Lucide, optional) ---------------- */
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+    window.lucide.createIcons();
   }
 })();
