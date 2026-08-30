@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <canvas class="space" id="spaceScene" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
   <div class="noise" aria-hidden="true"></div>
   <div class="grid-lines" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="progress" aria-hidden="true"><div id="progressBar"></div></div>
@@ -149,18 +151,23 @@
             <li><span class="mono">2</span><div><h4>Send it to the admin</h4><p>Pass it to <b>Ulrich</b> — he allow-lists you on Dedalus's gateway. No one else gets in.</p></div></li>
             <li><span class="mono">3</span><div><h4>Start talking</h4><p>Ask for research, drafts, task updates, meeting briefs — or just say hi. Same memory everywhere.</p></div></li>
           </ol>
-          <div class="access-alt mono reveal">NO TELEGRAM? A DEDICATED WEB ACCESS IS ON THE ROADMAP — THE CREW LEAD IS BUILDING IT.</div>
+          <div class="access-alt mono reveal">NO TELEGRAM? A DEDICATED WEB ACCESS IS ON THE ROADMAP — THE ADMIN IS BUILDING IT.</div>
           <div class="channel-rows reveal">
             <a class="channel" href="https://github.com/UlkhadPharaon/icarus-website" target="_blank" rel="noopener">
               <i data-lucide="github"></i>
               <span><b>GitHub</b><small>source, issues &amp; this very site</small></span>
               <em>↗</em>
             </a>
-            <a class="channel" href="#access" title="Private team workspace">
-              <i data-lucide="database"></i>
-              <span><b>Notion</b><small>task board &amp; research log — crew only</small></span>
-              <em>↗</em>
-            </a>
+            <div class="channel static">
+              <i data-lucide="send"></i>
+              <span><b>Telegram</b><small>the front door — gateway opening soon</small></span>
+              <em class="badge">SOON</em>
+            </div>
+            <div class="channel static">
+              <i data-lucide="lock"></i>
+              <span><b>Notion</b><small>task board &amp; research log — no public link</small></span>
+              <em class="badge cool">CREW ONLY</em>
+            </div>
           </div>
         </div>
         <div class="console demo reveal" aria-label="Scripted demo console">

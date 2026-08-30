@@ -385,7 +385,7 @@ body {
 }
 .crew-row {
   display: grid;
-  grid-template-columns: 70px 1.3fr 1fr 120px;
+  grid-template-columns: 70px 1fr 120px;
   gap: 20px;
   align-items: center;
   padding: 20px 10px;
@@ -575,6 +575,29 @@ body {
   font-size: 0.74rem;
   margin-top: 18px;
 }
+
+/* ---------- space scene ---------- */
+
+.space { position: fixed; inset: 0; z-index: 0; display: block; }
+.vignette {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 38%, transparent 52%, rgba(2, 4, 10, 0.62) 100%);
+}
+.channel.static { cursor: default; }
+.channel.static:hover { border-color: var(--line); background: none; transform: none; }
+.channel .badge {
+  margin-left: auto;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  color: var(--sun);
+  border: 1px solid rgba(255, 176, 84, 0.4);
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+.channel .badge.cool { color: var(--sky); border-color: rgba(47, 168, 255, 0.4); }
 
 /* ---------- responsive ---------- */
 
